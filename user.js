@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BZOJ Helper
 // @namespace    bzoj
-// @version      1.4
+// @version      1.4.1
 // @description  BZOJ助手
 // @author       ranwen
 // @match        https://lydsy.com/*
@@ -10,6 +10,9 @@
 // ==/UserScript==
 
 (function () {
+    String.prototype.trim = function () {
+        return this.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+    }
     function savedata(name, val) {
         localStorage.setItem(name, JSON.stringify(val));
     }
@@ -39,7 +42,7 @@
         for (i of document.getElementsByTagName("table")[0].childNodes[1].childNodes[0].childNodes)
             if (typeof (i.innerText) != "undefined" && i.innerText.indexOf("ModifyUser") != -1) {
                 username = i.innerText.substr(12);
-                username = username.replace(" ", "");
+                username = username.trim();
                 return;
             }
         logined = -1;
@@ -69,6 +72,12 @@
         }
         return 0;
     }
+    function isdiscusspage() {
+        if (fixurl.indexOf("https://lydsy.com/JudgeOnline/wttl/thread.php") == -1) {
+            return -1;
+        }
+        return 0;
+    }
     //更新db
     function updateprobinfobypage(pid) {
         sb = {};
@@ -86,15 +95,15 @@
     function updateprobinfobylist() {
         for (i of document.getElementById("problemset").getElementsByTagName("tbody")[0].childNodes) {
             sb = {}
-            prob = i.childNodes[1].innerText;
-            sb["title"] = i.childNodes[2].innerText;
-            sb["source"] = i.childNodes[3].innerText;
-            sb["solved"] = i.childNodes[4].innerText;
-            sb["submit"] = i.childNodes[5].innerText;
+            prob = i.childNodes[1].innerText.trim();
+            sb["title"] = i.childNodes[2].innerText.trim();
+            sb["source"] = i.childNodes[3].innerText.trim();
+            sb["solved"] = i.childNodes[4].innerText.trim();
+            sb["submit"] = i.childNodes[5].innerText.trim();
             savedata("problem_" + prob, sb)
         }
     }
-    function updateuserdb(def=document,nm = fixurl.substr(48)) {
+    function updateuserdb(def = document, nm = fixurl.substr(48)) {
         var list = def.getElementsByTagName("script")[2].innerHTML.match(/p\([1-9][0-9]{3}\)/g);
         var rl = Array();
         for (var i of list) {
@@ -102,18 +111,16 @@
         }
         savedata("userlist_" + nm, rl)
     }
-    function getmydb()
-    {
-        ret=readdata("userlist_" + username);
-        if(ret==null)
-        {
+    function getmydb() {
+        ret = readdata("userlist_" + username);
+        if (ret == null) {
             xhr = new XMLHttpRequest();
-            xhr.open('GET', 'https://lydsy.com/JudgeOnline/userinfo.php?user='+username, false);
+            xhr.open('GET', 'https://lydsy.com/JudgeOnline/userinfo.php?user=' + username, false);
             xhr.send(null);
             parser = new DOMParser();
-            gg=parser.parseFromString(xhr.responseText,"text/html")
-            updateuserdb(gg,username)
-            ret=readdata("userlist_" + username)
+            gg = parser.parseFromString(xhr.responseText, "text/html")
+            updateuserdb(gg, username)
+            ret = readdata("userlist_" + username)
         }
         return ret
     }
@@ -147,7 +154,7 @@
     if (islist() != -1) {
         updateprobinfobylist();
         for (i of document.getElementById("problemset").getElementsByTagName("tbody")[0].childNodes) {
-            prob = i.childNodes[1].innerText;
+            prob = i.childNodes[1].innerText.trim();
             if (markedp.indexOf(prob) != -1) i.childNodes[2].innerHTML = i.childNodes[2].innerHTML + poly_star;
         }
         document.getElementById("problemset").getElementsByTagName("thead")[0].childNodes[1].childNodes[0].childNodes[0].innerHTML = document.getElementById("problemset").getElementsByTagName("thead")[0].childNodes[1].childNodes[0].childNodes[0].innerHTML +
@@ -220,15 +227,14 @@
     if (isstatus() != -1) {
         for (var i of document.getElementsByTagName("center")[0].getElementsByTagName("table")[2].getElementsByTagName("tbody")[0].childNodes) {
             if (i.className != "evenrow" && i.className != "oddrow") continue;
-            prob = i.childNodes[2].childNodes[0].innerText;
-            user=i.childNodes[1].childNodes[0].innerText
-            stat=i.childNodes[3].childNodes[0].innerText
-            if(stat=="Accepted" && readdata("userlist_"+user)!=null)
-            {
-                udb=readdata("userlist_"+user)
+            prob = i.childNodes[2].childNodes[0].innerText.trim();
+            user = i.childNodes[1].childNodes[0].innerText.trim();
+            stat = i.childNodes[3].childNodes[0].innerText.trim();
+            if (stat == "Accepted" && readdata("userlist_" + user) != null) {
+                udb = readdata("userlist_" + user)
                 udb.push(prob)
-                savedata("userlist_"+user,udb)
-                if(user==username)
+                savedata("userlist_" + user, udb)
+                if (user == username)
                     mydb.push(prob)
             }
             mkd = ""
@@ -297,6 +303,10 @@
         }
     }
 
+    if(!isdiscusspage()!=-1)
+    {
+        document.getElementsByTagName("center")[2].childNodes[1].childNodes[1].innerHTML+=document.getElementsByTagName("center")[2].childNodes[1].childNodes[5].innerHTML;
+    }
 
     //自动续命
     document.getElementsByTagName("center")[0].childNodes[1].innerHTML += "<div class=\"tmp\" style=\"height:0px;width:0px;\"><img id=\"autofre\" src=\"data:image/png;base64,\" style=\"width:0px;height:0px;\"/></div>";
