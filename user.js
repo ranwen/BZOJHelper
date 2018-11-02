@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BZOJ Helper
 // @namespace    bzoj
-// @version      1.4.1
+// @version      1.4.2
 // @description  BZOJ助手
 // @author       ranwen
 // @match        https://lydsy.com/*
@@ -303,7 +303,7 @@
         }
     }
 
-    if(!isdiscusspage()!=-1)
+    if(isdiscusspage()!=-1)
     {
         document.getElementsByTagName("center")[2].childNodes[1].childNodes[1].innerHTML+=document.getElementsByTagName("center")[2].childNodes[1].childNodes[5].innerHTML;
     }
