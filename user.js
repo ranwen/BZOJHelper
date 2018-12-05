@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BZOJ Helper
 // @namespace    bzoj
-// @version      1.4.2
+// @version      1.5
 // @description  BZOJ助手
 // @author       ranwen
 // @match        https://lydsy.com/*
@@ -78,6 +78,13 @@
         }
         return 0;
     }
+    function isuserinfo() {
+        if (fixurl.indexOf("https://lydsy.com/JudgeOnline/userinfo.php?user=") == -1) {
+            return -1;
+        }
+        return 0;
+
+    }
     //更新db
     function updateprobinfobypage(pid) {
         sb = {};
@@ -100,8 +107,13 @@
             sb["source"] = i.childNodes[3].innerText.trim();
             sb["solved"] = i.childNodes[4].innerText.trim();
             sb["submit"] = i.childNodes[5].innerText.trim();
+            if (i.childNodes[0].innerText.trim() == "Y") {
+                if (mydb.indexOf(prob) == -1)
+                    mydb.push(prob)
+            }
             savedata("problem_" + prob, sb)
         }
+        savedata("userlist_" + username, mydb)
     }
     function updateuserdb(def = document, nm = fixurl.substr(48)) {
         var list = def.getElementsByTagName("script")[2].innerHTML.match(/p\([1-9][0-9]{3}\)/g);
@@ -147,9 +159,29 @@
         config = {};
     }
     setdefaultconfig();
-    if (fixurl.indexOf("https://lydsy.com/JudgeOnline/userinfo.php?user=") != -1) {
+    //page
+    if (isuserinfo() != -1) {
         updateuserdb();
+        document.getElementsByTagName("table")[1].getElementsByTagName("tr")[0].getElementsByTagName("td")[2].innerHTML+=" <a href=\"javascript:;\" id=\"diffme\">Diff with me</a>"
+        document.getElementById("diffme").onclick = function () {
+            nm=fixurl.substr(48)
+            txt=""
+            usdb=readdata("userlist_"+nm)
+            for(i=1000;i<=9999;i++)
+            {
+                hs1=(mydb.indexOf(""+i)!=-1)
+                hs2=(usdb.indexOf(""+i)!=-1)
+                if(hs1 && hs2)
+                    txt+="<a href=\"problem.php?id="+i+"\">"+i+"</a>\n"
+                if(hs1 && (!hs2))
+                    txt+="<a href=\"problem.php?id="+i+"\" style=\"color:#00FF00\">"+i+"</a>\n"
+                if((!hs1) && hs2)
+                    txt+="<a href=\"problem.php?id="+i+"\" style=\"color:#FF0000\">"+i+"</a>\n"
+            }
+            document.getElementsByTagName("table")[1].getElementsByTagName("tr")[1].getElementsByTagName("td")[2].innerHTML=txt
+        }
     }
+
     mydb = getmydb();
     if (islist() != -1) {
         updateprobinfobylist();
@@ -190,6 +222,7 @@
             document.getElementById("problemset").getElementsByTagName("tbody")[0].innerHTML = txt;
         }
     }
+
     var prob = isprob();
     if (prob != -1) {
         updateprobinfobypage(prob)
@@ -224,6 +257,7 @@
             savedata("marked", markedp)
         }
     }
+
     if (isstatus() != -1) {
         for (var i of document.getElementsByTagName("center")[0].getElementsByTagName("table")[2].getElementsByTagName("tbody")[0].childNodes) {
             if (i.className != "evenrow" && i.className != "oddrow") continue;
@@ -232,7 +266,8 @@
             stat = i.childNodes[3].childNodes[0].innerText.trim();
             if (stat == "Accepted" && readdata("userlist_" + user) != null) {
                 udb = readdata("userlist_" + user)
-                udb.push(prob)
+                if (udb.indexOf(prob) == -1)
+                    udb.push(prob)
                 savedata("userlist_" + user, udb)
                 if (user == username)
                     mydb.push(prob)
@@ -251,7 +286,6 @@
             i.childNodes[2].childNodes[0].innerHTML = fky + i.childNodes[2].childNodes[0].innerHTML + mkd;
         }
     }
-
 
     if (isconfig() != -1) {
         var usco =
@@ -303,9 +337,8 @@
         }
     }
 
-    if(isdiscusspage()!=-1)
-    {
-        document.getElementsByTagName("center")[2].childNodes[1].childNodes[1].innerHTML+=document.getElementsByTagName("center")[2].childNodes[1].childNodes[5].innerHTML;
+    if (isdiscusspage() != -1) {
+        document.getElementsByTagName("center")[2].childNodes[1].childNodes[1].innerHTML += document.getElementsByTagName("center")[2].childNodes[1].childNodes[5].innerHTML;
     }
 
     //自动续命

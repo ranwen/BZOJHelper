@@ -68,15 +68,15 @@
 
 - 修复bug
 
+### v1.5更新日志
+
+- 自动从ProblemSet页面等更新用户AC题目
+- 用户AC题目比较
 
 ## TODO
-- www/@选择
-- 自动从ProblemSet页面等更新用户AC题目(部分完成)
-- 用户AC题目比较
 - Discuss跳转楼层
 - 题目笔记
 - 完善设置
-- 自动检测更新
 - 云同步
 - 关注Discuss
 
