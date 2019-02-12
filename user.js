@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BZOJ Helper
 // @namespace    bzoj
-// @version      1.5
+// @version      1.5.1
 // @description  BZOJ助手
 // @author       ranwen
 // @match        https://lydsy.com/*
@@ -34,6 +34,8 @@
     var mydb = Array();
     var markedp = Array();
     var fixurl = location.href;
+    var havenotice = 0;
+    if(document.getElementsByTagName("center")[1].innerText.indexOf("Notice")!=-1)  havenotice=1;
     if (fixurl.indexOf("www.lydsy.com") != -1) {
         fixurl = fixurl.replace("www.lydsy.com", "lydsy.com");
         location.href = fixurl;
@@ -93,9 +95,9 @@
                 sb["title"] = i.data.substr(6)
                 break
             }
-        sb["submit"] = document.getElementsByTagName("center")[2].getElementsByClassName("green")[2].nextSibling.data;
+        sb["submit"] = document.getElementsByTagName("center")[1+havenotice].getElementsByClassName("green")[2].nextSibling.data;
         sb["submit"] = sb["submit"].slice(0, -2);
-        sb["solved"] = document.getElementsByTagName("center")[2].getElementsByClassName("green")[3].nextSibling.data;
+        sb["solved"] = document.getElementsByTagName("center")[1+havenotice].getElementsByClassName("green")[3].nextSibling.data;
         sb["source"] = document.getElementsByTagName("h2")[7].nextElementSibling.childNodes[0].innerText;
         savedata("problem_" + pid, sb)
     }
@@ -227,31 +229,31 @@
     if (prob != -1) {
         updateprobinfobypage(prob)
         if (mydb.indexOf(prob) != -1) {
-            var rdt = document.getElementsByTagName("center")[2].getElementsByTagName("h2")[0].innerHTML;
+            var rdt = document.getElementsByTagName("center")[1+havenotice].getElementsByTagName("h2")[0].innerHTML;
             var tdb = "<span style=\"color:#00FF00\">Y</span>" + rdt;
-            document.getElementsByTagName("center")[2].getElementsByTagName("h2")[0].innerHTML = tdb;
+            document.getElementsByTagName("center")[1+havenotice].getElementsByTagName("h2")[0].innerHTML = tdb;
         }
-        var ttt = document.getElementsByTagName("center")[2].innerHTML;
+        var ttt = document.getElementsByTagName("center")[1+havenotice].innerHTML;
         var fff = ttt + "[<a href=\"https://lydsy.com/JudgeOnline/status.php?problem_id=" + prob + "&user_id=" + username + "\">My Status</a>]";
-        document.getElementsByTagName("center")[2].innerHTML = fff;
-        var rdt = document.getElementsByTagName("center")[2].getElementsByTagName("h2")[0].innerHTML;
+        document.getElementsByTagName("center")[1+havenotice].innerHTML = fff;
+        var rdt = document.getElementsByTagName("center")[1+havenotice].getElementsByTagName("h2")[0].innerHTML;
         col = "#cccccc"
         if (markedp.indexOf(prob) != -1) col = "#FFFF00";
         var tdb = rdt +
             "<a href=\"javascript:;\" id=\"chmr\"><svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" style=\"width: 20px;height: 20px;\">\
                 <polygon points=\"19.510565162951536,6.9098300562505255 12.351141009169893,6.76393202250021 10,0 7.648858990830108,6.76393202250021 0.48943483704846535,6.9098300562505255 6.195773934819385,11.236067977499792 4.122147477075267,18.090169943749473 10,14 15.87785252292473,18.090169943749476 13.804226065180615,11.23606797749979\" style=\"fill:"+ col + ";\"></polygon>\
             </svg></a>";
-        document.getElementsByTagName("center")[2].getElementsByTagName("h2")[0].innerHTML = tdb;
+        document.getElementsByTagName("center")[1+havenotice].getElementsByTagName("h2")[0].innerHTML = tdb;
 
         document.getElementById("chmr").onclick = function () {
             if (markedp.indexOf(prob) != -1) {
                 if (config["unmarkalert"] == "1" && !window.confirm("确定鸽掉它?")) return; //取消标记提示
                 markedp.splice(markedp.indexOf(prob), 1)
-                document.getElementsByTagName("center")[2].getElementsByTagName("h2")[0].getElementsByTagName("a")[0].childNodes[0].childNodes[1].style.fill = "#cccccc"
+                document.getElementsByTagName("center")[1+havenotice].getElementsByTagName("h2")[0].getElementsByTagName("a")[0].childNodes[0].childNodes[1].style.fill = "#cccccc"
             }
             else {
                 markedp.push(prob)
-                document.getElementsByTagName("center")[2].getElementsByTagName("h2")[0].getElementsByTagName("a")[0].childNodes[0].childNodes[1].style.fill = "#FFFF00"
+                document.getElementsByTagName("center")[1+havenotice].getElementsByTagName("h2")[0].getElementsByTagName("a")[0].childNodes[0].childNodes[1].style.fill = "#FFFF00"
             }
             markedp.sort()
             savedata("marked", markedp)
@@ -311,7 +313,7 @@
         };
         tmpid = 0
         txt = "<h3>BZOJ Helper设置</h3>"
-        document.getElementsByTagName("center")[2].innerHTML += txt;
+        document.getElementsByTagName("center")[1+havenotice].innerHTML += txt;
         for (i in usco) {
             txt = "<p>"
             txt += usco[i]["name"] + ":"
@@ -324,11 +326,11 @@
                 tmpid++
             }
             txt += "</p>"
-            document.getElementsByTagName("center")[2].innerHTML += txt;
+            document.getElementsByTagName("center")[1+havenotice].innerHTML += txt;
             document.getElementById("tmprad" + chid).setAttribute("checked", true)
         }
-        document.getElementsByTagName("center")[2].innerHTML += "<p><input id=\"helpersumbit\" type=\"button\" value=\"保存\"/></p>"
-        document.getElementsByTagName("center")[2].innerHTML += "<span style=\"color:#FF0000\" id=\"savesucci\" hidden=\"true\">保存成功</span>"
+        document.getElementsByTagName("center")[1+havenotice].innerHTML += "<p><input id=\"helpersumbit\" type=\"button\" value=\"保存\"/></p>"
+        document.getElementsByTagName("center")[1+havenotice].innerHTML += "<span style=\"color:#FF0000\" id=\"savesucci\" hidden=\"true\">保存成功</span>"
         document.getElementById("helpersumbit").onclick = function () {
             for (i in usco)
                 config[i] = getradioval(i)
@@ -338,7 +340,7 @@
     }
 
     if (isdiscusspage() != -1) {
-        document.getElementsByTagName("center")[2].childNodes[1].childNodes[1].innerHTML += document.getElementsByTagName("center")[2].childNodes[1].childNodes[5].innerHTML;
+        document.getElementsByTagName("center")[1+havenotice].childNodes[1].childNodes[1].innerHTML += document.getElementsByTagName("center")[1+havenotice].childNodes[1].childNodes[5].innerHTML;
     }
 
     //自动续命
