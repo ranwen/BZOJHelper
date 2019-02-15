@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BZOJ Helper
 // @namespace    bzoj
-// @version      1.5.1
+// @version      1.5.2
 // @description  BZOJ助手
 // @author       ranwen
 // @match        https://lydsy.com/*
@@ -246,6 +246,7 @@
         document.getElementsByTagName("center")[1+havenotice].getElementsByTagName("h2")[0].innerHTML = tdb;
 
         document.getElementById("chmr").onclick = function () {
+            markedp = readdata("marked");
             if (markedp.indexOf(prob) != -1) {
                 if (config["unmarkalert"] == "1" && !window.confirm("确定鸽掉它?")) return; //取消标记提示
                 markedp.splice(markedp.indexOf(prob), 1)
