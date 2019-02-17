@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BZOJ Helper
 // @namespace    bzoj
-// @version      1.5.2
+// @version      1.5.3
 // @description  BZOJ助手
 // @author       ranwen
 // @match        https://lydsy.com/*
@@ -192,8 +192,9 @@
             if (markedp.indexOf(prob) != -1) i.childNodes[2].innerHTML = i.childNodes[2].innerHTML + poly_star;
         }
         document.getElementById("problemset").getElementsByTagName("thead")[0].childNodes[1].childNodes[0].childNodes[0].innerHTML = document.getElementById("problemset").getElementsByTagName("thead")[0].childNodes[1].childNodes[0].childNodes[0].innerHTML +
-            "<a href=\"javascript:;\" id=\"showmarkedlist\">Marked Problem</a>";
+            " <a href=\"javascript:;\" id=\"showmarkedlist\">Marked Problem</a>";
         document.getElementById("showmarkedlist").onclick = function () {
+            document.getElementById("problemset").getElementsByTagName("thead")[0].childNodes[1].childNodes[0].childNodes[0].innerHTML+=" <a href=\"javascript:;\" id=\"unmarkac\">Unmark AC Problem</a>";
             txt = ""
             for (i = 0; i < markedp.length; i++) {
                 o = markedp[i]
@@ -222,6 +223,50 @@
                 txt += nr;
             }
             document.getElementById("problemset").getElementsByTagName("tbody")[0].innerHTML = txt;
+
+            //show unmarkac
+            document.getElementById("unmarkac").onclick = function () {
+                if(!window.confirm("确定取消标记所有AC题目?"))  return
+                markedp=readdata("marked")
+                for (i = 0; i < markedp.length; i++) {
+                    o = markedp[i]
+                    if(mydb.indexOf(o) != -1)
+                    {
+                        markedp.splice(markedp.indexOf(o), 1)
+                        i--
+                    }
+                }
+                savedata("marked", markedp)
+                //rerender
+                txt = ""
+                for (i = 0; i < markedp.length; i++) {
+                    o = markedp[i]
+                    info = readdata("problem_" + o);
+                    nr = ""
+                    nr += "<tr class=\"" + ((i & 1) == 0 ? "evenrow" : "oddrow") + "\">";
+                    nr += "<td>";
+                    if (mydb.indexOf(o) != -1) nr += "<span class=\"yes\">Y</span>";
+                    nr += "</td>";
+                    nr += "<td align=\"center\">";
+                    nr += o;
+                    nr += "</td>";
+                    nr += "<td align=\"left\">";
+                    nr += "<a href=\"problem.php?id=" + o + "\">" + info['title'] + "</a>" + poly_star;
+                    nr += "</td>"
+                    nr += "<td align=\"center\">";
+                    nr += info['source']
+                    nr += "</td>";
+                    nr += "<td align=\"center\">";
+                    nr += "<a href=\"status.php?problem_id=" + o + "&amp;jresult=4\">" + info['solved'] + "</a>";
+                    nr += "</td>";
+                    nr += "<td align=\"center\">";
+                    nr += "<a href=\"status.php?problem_id=" + o + "\">" + info['submit'] + "</a>";
+                    nr += "</td>";
+                    nr += "</tr>";
+                    txt += nr;
+                }
+                document.getElementById("problemset").getElementsByTagName("tbody")[0].innerHTML = txt;
+            }
         }
     }
 
