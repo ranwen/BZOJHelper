@@ -43,11 +43,9 @@
                 fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
         return fmt;
     }
-    function HaveMatch(txt,arr)
-    {
-        for(let i of arr)
-        {
-            if(txt.indexOf(i)!=-1)  return 1;
+    function HaveMatch(txt, arr) {
+        for (let i of arr) {
+            if (txt.indexOf(i) != -1) return 1;
         }
         return 0;
     }
@@ -169,7 +167,7 @@
         }
         return ret
     }
-    function UpdateBlacklist(callb=0) {
+    function UpdateBlacklist(callb = 0) {
         URL = "https://raw.githubusercontent.com/ranwen/BZOJHelper/master/blacklist.json";
         xhr = new XMLHttpRequest();
         xhr.open('GET', URL, false);
@@ -178,10 +176,10 @@
         res = { "updatetime": ((new Date()) / 1000), "user": obj.user, "title": obj.title }
         Blacklist = res
         savedata("blacklist", res)
-        if(callb==1)
+        if (callb == 1)
             alert("更新成功 请刷新");
     }
-    function UpdateBlacklistAsync(callb=0) {
+    function UpdateBlacklistAsync(callb = 0) {
         setTimeout(UpdateBlacklist(callb), 1)
     }
     function CheckUpdateBlacklist() {
@@ -456,33 +454,32 @@
 
     if (isdiscusslist() != -1) {
         headerobj = document.getElementsByTagName("center")[1 + havenotice].childNodes[1]
-        headerobj.childNodes[1].innerHTML += "    [<a href=\"javascript:;\" id=\"updateblacklist\">Update Blacklist(Last: " + (new Date(Blacklist["updatetime"]*1000)).Format("MM-dd hh:mm") + ")</a>]"
-        document.getElementById("updateblacklist").onclick = function ()
-        {
+        headerobj.childNodes[1].innerHTML += "    [<a href=\"javascript:;\" id=\"updateblacklist\">Update Blacklist(Last: " + (new Date(Blacklist["updatetime"] * 1000)).Format("MM-dd hh:mm") + ")</a>]"
+        document.getElementById("updateblacklist").onclick = function () {
             UpdateBlacklistAsync(1)
         }
-        tbd=document.getElementsByTagName("tbody")[1]
-        txt=""
-        oo=0
-        for(let i of tbd.childNodes)
-        {
-            if(i.className!="oddrow" && i.className!="evenrow")
-            {
-                if(i.outerHTML!=undefined)
-                    txt+=i.outerHTML
-                continue
+        if (config["Blacklist"] == "1") {
+            tbd = document.getElementsByTagName("tbody")[1]
+            txt = ""
+            oo = 0
+            for (let i of tbd.childNodes) {
+                if (i.className != "oddrow" && i.className != "evenrow") {
+                    if (i.outerHTML != undefined)
+                        txt += i.outerHTML
+                    continue
+                }
+                usern = i.childNodes[3].innerText
+                titl = i.childNodes[4].innerText
+                if (Blacklist.user.indexOf(usern) != -1) continue;
+                if (HaveMatch(titl, Blacklist.title)) continue;
+                //if(i.className=='oddrow')   continue;//check
+                if (oo == 0) i.className = "evenrow"
+                else i.className = "oddrow"
+                txt += i.outerHTML
+                oo ^= 1
             }
-            usern=i.childNodes[3].innerText
-            titl=i.childNodes[4].innerText
-            if(Blacklist.user.indexOf(usern)!=-1)   continue;
-            if(HaveMatch(titl,Blacklist.title)) continue;
-            //if(i.className=='oddrow')   continue;//check
-            if(oo==0)   i.className="evenrow"
-            else    i.className="oddrow"
-            txt+=i.outerHTML
-            oo^=1
+            tbd.innerHTML = txt
         }
-        tbd.innerHTML=txt
     }
 
     if (isdiscusspage() != -1) {
