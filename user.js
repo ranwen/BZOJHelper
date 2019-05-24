@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BZOJ Helper
 // @namespace    bzoj
-// @version      1.5.3
+// @version      1.5.4
 // @description  BZOJ助手
 // @author       ranwen
 // @match        https://lydsy.com/*
@@ -26,6 +26,31 @@
             }
         }
     }
+    Date.prototype.Format = function (fmt) { //author: meizz   
+        var o = {
+            "M+": this.getMonth() + 1,                 //月份   
+            "d+": this.getDate(),                    //日   
+            "h+": this.getHours(),                   //小时   
+            "m+": this.getMinutes(),                 //分   
+            "s+": this.getSeconds(),                 //秒   
+            "q+": Math.floor((this.getMonth() + 3) / 3), //季度   
+            "S": this.getMilliseconds()             //毫秒   
+        };
+        if (/(y+)/.test(fmt))
+            fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+        for (var k in o)
+            if (new RegExp("(" + k + ")").test(fmt))
+                fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+        return fmt;
+    }
+    function HaveMatch(txt,arr)
+    {
+        for(let i of arr)
+        {
+            if(txt.indexOf(i)!=-1)  return 1;
+        }
+        return 0;
+    }
     var poly_star = "<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" style=\"width: 20px;height: 20px;\">\
     <polygon points=\"19.510565162951536,6.9098300562505255 12.351141009169893,6.76393202250021 10,0 7.648858990830108,6.76393202250021 0.48943483704846535,6.9098300562505255 6.195773934819385,11.236067977499792 4.122147477075267,18.090169943749473 10,14 15.87785252292473,18.090169943749476 13.804226065180615,11.23606797749979\" style=\"fill:#FFFF00;\"></polygon>\
 </svg>";
@@ -35,7 +60,7 @@
     var markedp = Array();
     var fixurl = location.href;
     var havenotice = 0;
-    if(document.getElementsByTagName("center")[1].innerText.indexOf("Notice")!=-1)  havenotice=1;
+    if (document.getElementsByTagName("center")[1].innerText.indexOf("Notice") != -1) havenotice = 1;
     if (fixurl.indexOf("www.lydsy.com") != -1) {
         fixurl = fixurl.replace("www.lydsy.com", "lydsy.com");
         location.href = fixurl;
@@ -80,6 +105,12 @@
         }
         return 0;
     }
+    function isdiscusslist() {
+        if (fixurl.indexOf("https://lydsy.com/JudgeOnline/wttl/wttl.php") == -1) {
+            return -1;
+        }
+        return 0;
+    }
     function isuserinfo() {
         if (fixurl.indexOf("https://lydsy.com/JudgeOnline/userinfo.php?user=") == -1) {
             return -1;
@@ -95,9 +126,9 @@
                 sb["title"] = i.data.substr(6)
                 break
             }
-        sb["submit"] = document.getElementsByTagName("center")[1+havenotice].getElementsByClassName("green")[2].nextSibling.data;
+        sb["submit"] = document.getElementsByTagName("center")[1 + havenotice].getElementsByClassName("green")[2].nextSibling.data;
         sb["submit"] = sb["submit"].slice(0, -2);
-        sb["solved"] = document.getElementsByTagName("center")[1+havenotice].getElementsByClassName("green")[3].nextSibling.data;
+        sb["solved"] = document.getElementsByTagName("center")[1 + havenotice].getElementsByClassName("green")[3].nextSibling.data;
         sb["source"] = document.getElementsByTagName("h2")[7].nextElementSibling.childNodes[0].innerText;
         savedata("problem_" + pid, sb)
     }
@@ -138,8 +169,28 @@
         }
         return ret
     }
+    function UpdateBlacklist(callb=0) {
+        URL = "https://raw.githubusercontent.com/ranwen/BZOJHelper/master/blacklist.json";
+        xhr = new XMLHttpRequest();
+        xhr.open('GET', URL, false);
+        xhr.send(null);
+        obj = JSON.parse(xhr.responseText)
+        res = { "updatetime": ((new Date()) / 1000), "user": obj.user, "title": obj.title }
+        Blacklist = res
+        savedata("blacklist", res)
+        if(callb==1)
+            alert("更新成功 请刷新");
+    }
+    function UpdateBlacklistAsync(callb=0) {
+        setTimeout(UpdateBlacklist(callb), 1)
+    }
+    function CheckUpdateBlacklist() {
+        nowt = (new Date()) / 1000
+        if (nowt - Blacklist["updatetime"] < 7 * 24 * 3600) return;
+        UpdateBlacklistAsync();
+    }
     function setdefaultconfig() {
-        def = { "unmarkalert": "0", "autoext": "1", "statusny": "1" };
+        def = { "unmarkalert": "0", "autoext": "1", "statusny": "1", "AutoUpdateBlacklist": "1", "Blacklist": "1" };
         for (i in def) {
             if (typeof (config[i]) == "undefined")
                 config[i] = def[i];
@@ -161,26 +212,32 @@
         config = {};
     }
     setdefaultconfig();
+    Blacklist = readdata("blacklist");
+    if (Blacklist == null) {
+        savedata("blacklist", { "updatetime": 0, "user": [], "title": [] });
+        Blacklist = { "updatetime": 0, "user": [], "title": [] };
+    }
+    if (config["AutoUpdateBlacklist"] == "1")
+        CheckUpdateBlacklist();
     //page
     if (isuserinfo() != -1) {
         updateuserdb();
-        document.getElementsByTagName("table")[1].getElementsByTagName("tr")[0].getElementsByTagName("td")[2].innerHTML+=" <a href=\"javascript:;\" id=\"diffme\">Diff with me</a>"
+        document.getElementsByTagName("table")[1].getElementsByTagName("tr")[0].getElementsByTagName("td")[2].innerHTML += " <a href=\"javascript:;\" id=\"diffme\">Diff with me</a>"
         document.getElementById("diffme").onclick = function () {
-            nm=fixurl.substr(48)
-            txt=""
-            usdb=readdata("userlist_"+nm)
-            for(i=1000;i<=9999;i++)
-            {
-                hs1=(mydb.indexOf(""+i)!=-1)
-                hs2=(usdb.indexOf(""+i)!=-1)
-                if(hs1 && hs2)
-                    txt+="<a href=\"problem.php?id="+i+"\">"+i+"</a>\n"
-                if(hs1 && (!hs2))
-                    txt+="<a href=\"problem.php?id="+i+"\" style=\"color:#00FF00\">"+i+"</a>\n"
-                if((!hs1) && hs2)
-                    txt+="<a href=\"problem.php?id="+i+"\" style=\"color:#FF0000\">"+i+"</a>\n"
+            nm = fixurl.substr(48)
+            txt = ""
+            usdb = readdata("userlist_" + nm)
+            for (i = 1000; i <= 9999; i++) {
+                hs1 = (mydb.indexOf("" + i) != -1)
+                hs2 = (usdb.indexOf("" + i) != -1)
+                if (hs1 && hs2)
+                    txt += "<a href=\"problem.php?id=" + i + "\">" + i + "</a>\n"
+                if (hs1 && (!hs2))
+                    txt += "<a href=\"problem.php?id=" + i + "\" style=\"color:#00FF00\">" + i + "</a>\n"
+                if ((!hs1) && hs2)
+                    txt += "<a href=\"problem.php?id=" + i + "\" style=\"color:#FF0000\">" + i + "</a>\n"
             }
-            document.getElementsByTagName("table")[1].getElementsByTagName("tr")[1].getElementsByTagName("td")[2].innerHTML=txt
+            document.getElementsByTagName("table")[1].getElementsByTagName("tr")[1].getElementsByTagName("td")[2].innerHTML = txt
         }
     }
 
@@ -192,9 +249,9 @@
             if (markedp.indexOf(prob) != -1) i.childNodes[2].innerHTML = i.childNodes[2].innerHTML + poly_star;
         }
         document.getElementById("problemset").getElementsByTagName("thead")[0].childNodes[1].childNodes[0].childNodes[0].innerHTML = document.getElementById("problemset").getElementsByTagName("thead")[0].childNodes[1].childNodes[0].childNodes[0].innerHTML +
-            " <a href=\"javascript:;\" id=\"showmarkedlist\">Marked Problem</a>";
+            " <a href=\"javascript:;\" id=\"showmarkedlist\">Marked Problem(" + markedp.length + ")</a>";
         document.getElementById("showmarkedlist").onclick = function () {
-            document.getElementById("problemset").getElementsByTagName("thead")[0].childNodes[1].childNodes[0].childNodes[0].innerHTML+=" <a href=\"javascript:;\" id=\"unmarkac\">Unmark AC Problem</a>";
+            document.getElementById("problemset").getElementsByTagName("thead")[0].childNodes[1].childNodes[0].childNodes[0].innerHTML += " <a href=\"javascript:;\" id=\"unmarkac\">Unmark AC Problem</a>";
             txt = ""
             for (i = 0; i < markedp.length; i++) {
                 o = markedp[i]
@@ -226,12 +283,11 @@
 
             //show unmarkac
             document.getElementById("unmarkac").onclick = function () {
-                if(!window.confirm("确定取消标记所有AC题目?"))  return
-                markedp=readdata("marked")
+                if (!window.confirm("确定取消标记所有AC题目?")) return
+                markedp = readdata("marked")
                 for (i = 0; i < markedp.length; i++) {
                     o = markedp[i]
-                    if(mydb.indexOf(o) != -1)
-                    {
+                    if (mydb.indexOf(o) != -1) {
                         markedp.splice(markedp.indexOf(o), 1)
                         i--
                     }
@@ -266,6 +322,7 @@
                     txt += nr;
                 }
                 document.getElementById("problemset").getElementsByTagName("tbody")[0].innerHTML = txt;
+                document.getElementById("showmarkedlist").innerText = "Marked Problem(" + markedp.length + ")";
             }
         }
     }
@@ -274,32 +331,32 @@
     if (prob != -1) {
         updateprobinfobypage(prob)
         if (mydb.indexOf(prob) != -1) {
-            var rdt = document.getElementsByTagName("center")[1+havenotice].getElementsByTagName("h2")[0].innerHTML;
+            var rdt = document.getElementsByTagName("center")[1 + havenotice].getElementsByTagName("h2")[0].innerHTML;
             var tdb = "<span style=\"color:#00FF00\">Y</span>" + rdt;
-            document.getElementsByTagName("center")[1+havenotice].getElementsByTagName("h2")[0].innerHTML = tdb;
+            document.getElementsByTagName("center")[1 + havenotice].getElementsByTagName("h2")[0].innerHTML = tdb;
         }
-        var ttt = document.getElementsByTagName("center")[1+havenotice].innerHTML;
+        var ttt = document.getElementsByTagName("center")[1 + havenotice].innerHTML;
         var fff = ttt + "[<a href=\"https://lydsy.com/JudgeOnline/status.php?problem_id=" + prob + "&user_id=" + username + "\">My Status</a>]";
-        document.getElementsByTagName("center")[1+havenotice].innerHTML = fff;
-        var rdt = document.getElementsByTagName("center")[1+havenotice].getElementsByTagName("h2")[0].innerHTML;
+        document.getElementsByTagName("center")[1 + havenotice].innerHTML = fff;
+        var rdt = document.getElementsByTagName("center")[1 + havenotice].getElementsByTagName("h2")[0].innerHTML;
         col = "#cccccc"
         if (markedp.indexOf(prob) != -1) col = "#FFFF00";
         var tdb = rdt +
             "<a href=\"javascript:;\" id=\"chmr\"><svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" style=\"width: 20px;height: 20px;\">\
                 <polygon points=\"19.510565162951536,6.9098300562505255 12.351141009169893,6.76393202250021 10,0 7.648858990830108,6.76393202250021 0.48943483704846535,6.9098300562505255 6.195773934819385,11.236067977499792 4.122147477075267,18.090169943749473 10,14 15.87785252292473,18.090169943749476 13.804226065180615,11.23606797749979\" style=\"fill:"+ col + ";\"></polygon>\
             </svg></a>";
-        document.getElementsByTagName("center")[1+havenotice].getElementsByTagName("h2")[0].innerHTML = tdb;
+        document.getElementsByTagName("center")[1 + havenotice].getElementsByTagName("h2")[0].innerHTML = tdb;
 
         document.getElementById("chmr").onclick = function () {
             markedp = readdata("marked");
             if (markedp.indexOf(prob) != -1) {
                 if (config["unmarkalert"] == "1" && !window.confirm("确定鸽掉它?")) return; //取消标记提示
                 markedp.splice(markedp.indexOf(prob), 1)
-                document.getElementsByTagName("center")[1+havenotice].getElementsByTagName("h2")[0].getElementsByTagName("a")[0].childNodes[0].childNodes[1].style.fill = "#cccccc"
+                document.getElementsByTagName("center")[1 + havenotice].getElementsByTagName("h2")[0].getElementsByTagName("a")[0].childNodes[0].childNodes[1].style.fill = "#cccccc"
             }
             else {
                 markedp.push(prob)
-                document.getElementsByTagName("center")[1+havenotice].getElementsByTagName("h2")[0].getElementsByTagName("a")[0].childNodes[0].childNodes[1].style.fill = "#FFFF00"
+                document.getElementsByTagName("center")[1 + havenotice].getElementsByTagName("h2")[0].getElementsByTagName("a")[0].childNodes[0].childNodes[1].style.fill = "#FFFF00"
             }
             markedp.sort()
             savedata("marked", markedp)
@@ -355,13 +412,25 @@
                 "name": "Status页面显示是否AC",
                 "0": "关闭",
                 "1": "开启"
+            },
+            "Blacklist":
+            {
+                "name": "Discuss黑名单",
+                "0": "关闭",
+                "1": "开启"
+            },
+            "AutoUpdateBlacklist":
+            {
+                "name": "自动更新Discuss黑名单",
+                "0": "关闭",
+                "1": "开启"
             }
         };
         tmpid = 0
-        txt = "<h3>BZOJ Helper设置</h3>"
-        document.getElementsByTagName("center")[1+havenotice].innerHTML += txt;
+        txt = "<h3>BZOJ Helper设置</h3>";
+        document.getElementsByTagName("center")[1 + havenotice].innerHTML += txt;
         for (i in usco) {
-            txt = "<p>"
+            txt = "<p>";
             txt += usco[i]["name"] + ":"
             chid = -1
             for (j in usco[i]) {
@@ -372,11 +441,11 @@
                 tmpid++
             }
             txt += "</p>"
-            document.getElementsByTagName("center")[1+havenotice].innerHTML += txt;
+            document.getElementsByTagName("center")[1 + havenotice].innerHTML += txt;
             document.getElementById("tmprad" + chid).setAttribute("checked", true)
         }
-        document.getElementsByTagName("center")[1+havenotice].innerHTML += "<p><input id=\"helpersumbit\" type=\"button\" value=\"保存\"/></p>"
-        document.getElementsByTagName("center")[1+havenotice].innerHTML += "<span style=\"color:#FF0000\" id=\"savesucci\" hidden=\"true\">保存成功</span>"
+        document.getElementsByTagName("center")[1 + havenotice].innerHTML += "<p><input id=\"helpersumbit\" type=\"button\" value=\"保存\"/></p>"
+        document.getElementsByTagName("center")[1 + havenotice].innerHTML += "<span style=\"color:#FF0000\" id=\"savesucci\" hidden=\"true\">保存成功</span>"
         document.getElementById("helpersumbit").onclick = function () {
             for (i in usco)
                 config[i] = getradioval(i)
@@ -385,8 +454,39 @@
         }
     }
 
+    if (isdiscusslist() != -1) {
+        headerobj = document.getElementsByTagName("center")[1 + havenotice].childNodes[1]
+        headerobj.childNodes[1].innerHTML += "    [<a href=\"javascript:;\" id=\"updateblacklist\">Update Blacklist(Last: " + (new Date(Blacklist["updatetime"]*1000)).Format("MM-dd hh:mm") + ")</a>]"
+        document.getElementById("updateblacklist").onclick = function ()
+        {
+            UpdateBlacklistAsync(1)
+        }
+        tbd=document.getElementsByTagName("tbody")[1]
+        txt=""
+        oo=0
+        for(let i of tbd.childNodes)
+        {
+            if(i.className!="oddrow" && i.className!="evenrow")
+            {
+                if(i.outerHTML!=undefined)
+                    txt+=i.outerHTML
+                continue
+            }
+            usern=i.childNodes[3].innerText
+            titl=i.childNodes[4].innerText
+            if(Blacklist.user.indexOf(usern)!=-1)   continue;
+            if(HaveMatch(titl,Blacklist.title)) continue;
+            //if(i.className=='oddrow')   continue;//check
+            if(oo==0)   i.className="evenrow"
+            else    i.className="oddrow"
+            txt+=i.outerHTML
+            oo^=1
+        }
+        tbd.innerHTML=txt
+    }
+
     if (isdiscusspage() != -1) {
-        document.getElementsByTagName("center")[1+havenotice].childNodes[1].childNodes[1].innerHTML += document.getElementsByTagName("center")[1+havenotice].childNodes[1].childNodes[5].innerHTML;
+        document.getElementsByTagName("center")[1 + havenotice].childNodes[1].childNodes[1].innerHTML += document.getElementsByTagName("center")[1 + havenotice].childNodes[1].childNodes[5].innerHTML;
     }
 
     //自动续命
